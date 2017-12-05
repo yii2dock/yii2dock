@@ -1,0 +1,48 @@
+version: "3"
+
+services:
+
+  application:
+    build:
+      context: ./application
+    container_name: ${PROJECT}_application
+    tty: true
+    volumes:
+      - ${DOCUMENT_ROOT}:/var/www
+
+  nginx:
+    build:
+      context: ./nginx
+    container_name: ${PROJECT}_nginx
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ${DOCUMENT_ROOT}:/var/www
+
+  php-fpm:
+    build:
+      context: ./php-fpm
+      args:
+        - PHP_VERSION = ${PHP_VERSION}
+    container_name: ${PROJECT}_php-fpm
+    volumes:
+      - ${DOCUMENT_ROOT}:/var/www
+
+  percona:
+    build:
+      context: ./percona
+    container_name: ${PROJECT}_percona
+    environment:
+      - MYSQL_DATABASE=${PERCONA_DATABASE}
+      - MYSQL_USER=${PERCONA_USER}
+      - MYSQL_PASSWORD=${PERCONA_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${PERCONA_ROOT_PASSWORD}
+    ports:
+      - "${PERCONA_PORT}:3306"
+    volumes:
+      - ./data/percona:/var/lib/mysql
+
+  memcached:
+    image: memcached:1.5-alpine
+    container_name: ${PROJECT}_memcached

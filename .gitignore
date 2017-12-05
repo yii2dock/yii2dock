@@ -1,0 +1,28 @@
+.idea/
+
+.env
+
+# Data
+data/application/*
+!data/application/.gitkeep
+data/percona/*
+!data/percona/.gitkeep
+
+# Nginx
+nginx/etc/nginx/*.conf
+nginx/etc/nginx/conf.d/*.conf
+
+# Percona
+percona/etc/mysql/conf.d/my.cnf
+
+# PHP-FPM
+php-fpm/composer/composer.json
+php-fpm/usr/local/etc/php/php.ini
+php-fpm/usr/local/etc/php-fpm.d/www.conf
+php-fpm/usr/local/etc/php-fpm.conf
+
+# Excludes
+!.gitignore
+
+# But!
+data/application/.gitignore
