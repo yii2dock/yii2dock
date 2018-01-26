@@ -1,0 +1,77 @@
+FROM php:7.1-fpm-alpine
+
+RUN set -ex \
+    && addgroup -g 1000 yii2 \
+    && adduser -u 1000 -D -h /home/yii2 -G yii2 -s /bin/sh yii2
+
+# PHP
+ENV MEMCACHED_DEPS zlib-dev libmemcached-dev cyrus-sasl-dev
+ENV GD_DEPS freetype-dev libpng-dev libjpeg-turbo-dev
+
+RUN apk update \
+    && apk add --no-cache --update --virtual .phpize-deps $PHPIZE_DEPS \
+        && apk add --no-cache --update --virtual .memcached-deps $MEMCACHED_DEPS \
+        && apk add --no-cache --update --virtual .gd-deps $GD_DEPS \
+        && apk add --no-cache \
+            icu-dev \
+            postgresql-dev \
+            libxml2-dev \
+            libmcrypt-dev\
+            libmemcached-libs zlib \
+            freetype libpng libjpeg-turbo \
+            imagemagick-dev libtool
+
+RUN docker-php-ext-configure gd \
+        --with-freetype-dir=/usr/include/ \
+        --with-png-dir=/usr/include/ \
+        --with-jpeg-dir=/usr/include/ \
+    && docker-php-ext-install gd \
+    && set -xe \
+    && pecl install memcached \
+    && echo "extension=memcached.so" > /usr/local/etc/php/conf.d/20_memcached.ini \
+    && pecl install imagick \
+    && docker-php-ext-enable imagick \
+    && docker-php-ext-install \
+        intl \
+        opcache \
+        pdo pdo_mysql mysqli \
+        pgsql pdo_pgsql \
+        mcrypt \
+        mbstring \
+        xml xmlrpc\
+        zip
+
+# Cleanup
+RUN apk del .memcached-deps .phpize-deps .gd-deps libtool \
+    && rm -rf /usr/share/php7 \
+    && rm -rf /tmp/*
+
+# Composer
+RUN mkdir /home/yii2/.composer
+COPY ./composer/composer.json.example /home/yii2/.composer/composer.json
+RUN chown -R yii2:yii2 /home/yii2/.composer
+
+ARG COMPOSER_VERSION="latest"
+ENV COMPOSER_VERSION ${COMPOSER_VERSION}
+COPY ./composer/${COMPOSER_VERSION}/composer.phar /usr/local/bin/composer
+
+RUN chmod +x /usr/local/bin/composer
+
+USER yii2
+
+ARG COMPOSER_OAUTH_TOKEN=false
+ENV COMPOSER_OAUTH_TOKEN ${COMPOSER_OAUTH_TOKEN}
+RUN if [ ${COMPOSER_OAUTH_TOKEN} != false ]; then \
+        composer config --global github-oauth.github.com ${COMPOSER_OAUTH_TOKEN} \
+    ;fi
+
+COPY usr/local/etc/php /usr/local/etc/php
+COPY usr/local/etc/php-fpm.d /usr/local/etc/php-fpm.d
+
+USER root
+
+WORKDIR /var/www
+
+CMD ["php-fpm"]
+
+EXPOSE 9000

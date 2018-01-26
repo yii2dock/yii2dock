@@ -22,10 +22,9 @@ services:
 
   php-fpm:
     build:
-      context: ./php-fpm
-      args:
-        - PHP_VERSION = ${PHP_VERSION}
-    container_name: ${PROJECT}_php-fpm
+      context: ./php-fpm/
+      dockerfile: "Dockerfile-${PHP_VERSION}"
+    container_name: "${PROJECT}_php-fpm_${PHP_VERSION}"
     volumes:
       - ${DOCUMENT_ROOT}:/var/www
 
