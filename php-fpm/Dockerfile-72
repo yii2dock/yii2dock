@@ -49,9 +49,13 @@ RUN chown -R yii2:yii2 /home/yii2/.composer
 
 ARG COMPOSER_VERSION="latest"
 ENV COMPOSER_VERSION ${COMPOSER_VERSION}
-COPY ./composer/${COMPOSER_VERSION}/composer.phar /usr/local/bin/composer
-
-RUN chmod +x /usr/local/bin/composer
+RUN wget https://getcomposer.org/installer -P /home/yii2
+RUN if [ ${COMPOSER_VERSION} == "latest" ]; then \
+        php -f /home/yii2/installer args --install-dir="/usr/local/bin/" --filename="composer"; \
+    else \
+        php -f /home/yii2/installer args --version="${COMPOSER_VERSION}" --install-dir="/usr/local/bin" --filename="composer" \
+    ;fi
+RUN chmod +x /usr/local/bin/composer && rm /home/yii2/installer
 
 USER yii2
 

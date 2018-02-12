@@ -24,6 +24,8 @@ services:
     build:
       context: ./php-fpm/
       dockerfile: "Dockerfile-${PHP_VERSION}"
+      args:
+        - COMPOSER_VERSION=${COMPOSER_VERSION}
     container_name: "${PROJECT}_php-fpm_${PHP_VERSION}"
     volumes:
       - ${DOCUMENT_ROOT}:/var/www
